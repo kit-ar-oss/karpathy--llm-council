@@ -2,14 +2,20 @@
  * API client for the LLM Council backend.
  */
 
-const API_BASE = 'http://localhost:8001';
+// In local dev (npm run dev), default to localhost backend.
+// In Docker/production, default to same-origin (Nginx proxies /api -> backend).
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? 'http://localhost:8001' : '');
+
+const url = (path) => `${API_BASE}${path}`;
 
 export const api = {
   /**
    * List all conversations.
    */
   async listConversations() {
-    const response = await fetch(`${API_BASE}/api/conversations`);
+    const response = await fetch(url('/api/conversations'));
     if (!response.ok) {
       throw new Error('Failed to list conversations');
     }
@@ -20,7 +26,7 @@ export const api = {
    * Create a new conversation.
    */
   async createConversation() {
-    const response = await fetch(`${API_BASE}/api/conversations`, {
+    const response = await fetch(url('/api/conversations'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -38,7 +44,7 @@ export const api = {
    */
   async getConversation(conversationId) {
     const response = await fetch(
-      `${API_BASE}/api/conversations/${conversationId}`
+      url(`/api/conversations/${conversationId}`)
     );
     if (!response.ok) {
       throw new Error('Failed to get conversation');
@@ -51,7 +57,7 @@ export const api = {
    */
   async sendMessage(conversationId, content) {
     const response = await fetch(
-      `${API_BASE}/api/conversations/${conversationId}/message`,
+      url(`/api/conversations/${conversationId}/message`),
       {
         method: 'POST',
         headers: {
@@ -75,7 +81,7 @@ export const api = {
    */
   async sendMessageStream(conversationId, content, onEvent) {
     const response = await fetch(
-      `${API_BASE}/api/conversations/${conversationId}/message/stream`,
+      url(`/api/conversations/${conversationId}/message/stream`),
       {
         method: 'POST',
         headers: {
