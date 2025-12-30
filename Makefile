@@ -5,7 +5,14 @@ SHELL := /bin/bash
 COMPOSE ?= docker compose
 COMPOSE_FILE ?= compose.yaml
 
-.PHONY: help env build up down restart ps logs logs-backend logs-frontend clean
+ACR_LOGIN_SERVER ?= example.azurecr.io
+ACR_REPO ?= example/llm-council
+IMAGE_TAG ?= latest
+
+BACKEND_IMAGE := $(ACR_LOGIN_SERVER)/$(ACR_REPO)/backend:$(IMAGE_TAG)
+FRONTEND_IMAGE := $(ACR_LOGIN_SERVER)/$(ACR_REPO)/frontend:$(IMAGE_TAG)
+
+.PHONY: help env build up down restart ps logs logs-backend logs-frontend clean push-acr
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make <target>\n\nTargets:\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -40,3 +47,12 @@ logs-frontend: ## Tail frontend logs
 
 clean: ## Stop services and remove volumes + orphans
 	@$(COMPOSE) -f $(COMPOSE_FILE) down -v --remove-orphans
+
+push-acr: ## Build + push backend/frontend images to Azure ACR (set ACR_LOGIN_SERVER/ACR_REPO/IMAGE_TAG)
+	@echo "Building images:"
+	@echo "  $(BACKEND_IMAGE)"
+	@echo "  $(FRONTEND_IMAGE)"
+	@ACR_LOGIN_SERVER=$(ACR_LOGIN_SERVER) ACR_REPO=$(ACR_REPO) IMAGE_TAG=$(IMAGE_TAG) \
+		$(COMPOSE) -f $(COMPOSE_FILE) build
+	@docker push "$(BACKEND_IMAGE)"
+	@docker push "$(FRONTEND_IMAGE)"
