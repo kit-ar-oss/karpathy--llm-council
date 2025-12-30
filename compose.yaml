@@ -1,0 +1,27 @@
+services:
+  backend:
+    image: example.azurecr.io/example/llm-council/backend:latest
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - backend_data:/app/data
+    ports:
+      - "127.0.0.1:8001:8001"
+
+  frontend:
+    image: example.azurecr.io/example/llm-council/frontend:latest
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      - backend
+    ports:
+      - "25173:80"
+
+volumes:
+  backend_data:
