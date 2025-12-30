@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ${ACR_LOGIN_SERVER:-example.azurecr.io}/${ACR_REPO:-example/llm-council}/backend:${IMAGE_TAG:-latest}
+    image: ${ACR_LOGIN_SERVER}/${ACR_REPO}/backend:${IMAGE_TAG}
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -14,7 +14,7 @@ services:
       - "127.0.0.1:8001:8001"
 
   frontend:
-    image: ${ACR_LOGIN_SERVER:-example.azurecr.io}/${ACR_REPO:-example/llm-council}/frontend:${IMAGE_TAG:-latest}
+    image: ${ACR_LOGIN_SERVER}/${ACR_REPO}/frontend:${IMAGE_TAG}
     build:
       context: .
       dockerfile: frontend/Dockerfile
