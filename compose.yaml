@@ -10,7 +10,7 @@ services:
     volumes:
       - backend_data:/app/data
     ports:
-      - "8001:8001"
+      - "127.0.0.1:8001:8001"
 
   frontend:
     build:
@@ -20,6 +20,15 @@ services:
       - backend
     ports:
       - "5173:80"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    env_file:
+      - .env.cftunnel.vars
+    depends_on:
+      - frontend
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run", "--token", "${CLOUDFLARE_TUNNEL_TOKEN}"]
 
 volumes:
   backend_data:

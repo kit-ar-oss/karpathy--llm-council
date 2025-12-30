@@ -11,6 +11,7 @@ wheels/
 
 # Keys and secrets
 .env
+.env.cftunnel.vars
 
 # Data files
 data/
