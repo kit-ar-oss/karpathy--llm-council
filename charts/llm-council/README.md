@@ -16,9 +16,9 @@ Set your image repositories/tags (defaults are placeholders):
 
 ```bash
 helm upgrade --install llm-council ./charts/llm-council \
-  --set backend.image.repository="example.azurecr.io/example/llm-council/backend" \
+  --set backend.image.repository="gcr.io/example-project/llm-council/backend" \
   --set backend.image.tag="latest" \
-  --set frontend.image.repository="example.azurecr.io/example/llm-council/frontend" \
+  --set frontend.image.repository="gcr.io/example-project/llm-council/frontend" \
   --set frontend.image.tag="latest"
 ```
 

@@ -1,0 +1,115 @@
+name: Build & Publish (GCR + Helm OCI)
+
+on:
+  push:
+    branches: ["master"]
+    tags: ["v*.*.*"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  # Change these to your project/repository naming.
+  GCP_PROJECT_ID: example-project
+  GCR_REGISTRY: gcr.io
+  IMAGE_REPO: llm-council
+  CHART_NAME: llm-council
+  CHART_DIR: charts/llm-council
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Auth option A (recommended): Workload Identity Federation (WIF).
+      # Configure these repository secrets/vars in GitHub:
+      # - GCP_WORKLOAD_IDENTITY_PROVIDER
+      # - GCP_SERVICE_ACCOUNT_EMAIL
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker auth for GCR
+        run: gcloud auth configure-docker ${{ env.GCR_REGISTRY }} --quiet
+
+      - name: Compute tags
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA::7}"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "image_tags=$VERSION,sha-$SHORT_SHA" >> "$GITHUB_OUTPUT"
+            echo "chart_version=$VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=latest" >> "$GITHUB_OUTPUT"
+            echo "image_tags=latest,sha-$SHORT_SHA" >> "$GITHUB_OUTPUT"
+            echo "chart_version=0.0.0-$SHORT_SHA" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build & push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.GCR_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_REPO }}/backend:${{ steps.meta.outputs.version }}
+            ${{ env.GCR_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_REPO }}/backend:sha-${{ github.sha }}
+          provenance: false
+
+      - name: Build & push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.GCR_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_REPO }}/frontend:${{ steps.meta.outputs.version }}
+            ${{ env.GCR_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_REPO }}/frontend:sha-${{ github.sha }}
+          provenance: false
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+
+      - name: Package chart (versioned)
+        shell: bash
+        run: |
+          set -euo pipefail
+          WORKDIR="$(mktemp -d)"
+          cp -R "${CHART_DIR}" "${WORKDIR}/${CHART_NAME}"
+          CHART_YAML="${WORKDIR}/${CHART_NAME}/Chart.yaml"
+          # Update chart version/appVersion for the pushed artifact
+          sed -i "s/^version: .*/version: ${CHART_VERSION}/" "$CHART_YAML"
+          sed -i "s/^appVersion: .*/appVersion: \"${CHART_VERSION}\"/" "$CHART_YAML"
+          helm package "${WORKDIR}/${CHART_NAME}" -d "${WORKDIR}"
+          echo "PACKAGED_TGZ=$(ls -1 "${WORKDIR}/${CHART_NAME}-"*.tgz | head -n1)" >> "$GITHUB_ENV"
+        env:
+          CHART_VERSION: ${{ steps.meta.outputs.chart_version }}
+
+      - name: Push Helm chart (OCI) to GCR
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Helm uses docker credentials; gcloud auth configure-docker already set them up.
+          helm push "${PACKAGED_TGZ}" "oci://${GCR_REGISTRY}/${GCP_PROJECT_ID}/${IMAGE_REPO}/charts"
