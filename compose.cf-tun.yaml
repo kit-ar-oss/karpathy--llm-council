@@ -6,4 +6,6 @@ services:
     depends_on:
       - frontend
     restart: unless-stopped
-    command: ["tunnel", "--no-autoupdate", "run", "--token", "${CLOUDFLARE_TUNNEL_TOKEN}"]
+    # Note: docker compose variable substitution does NOT read from env_file.
+    # We intentionally expand $CLOUDFLARE_TUNNEL_TOKEN at container runtime instead.
+    command: ["sh", "-c", "cloudflared tunnel --no-autoupdate run --token \"$CLOUDFLARE_TUNNEL_TOKEN\""]
