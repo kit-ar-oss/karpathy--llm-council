@@ -23,4 +23,4 @@ data/
 *.log
 
 .env
-.env.cftunnel.vars
+.env.cf-tunnel.vars

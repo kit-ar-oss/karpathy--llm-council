@@ -6,7 +6,7 @@ COMPOSE ?= docker compose
 COMPOSE_FILES_BASE := -f compose.yaml
 # Auto-include Cloudflare tunnel compose file only when token env file exists.
 # This keeps common local commands working without requiring tunnel config.
-COMPOSE_FILES := $(COMPOSE_FILES_BASE) $(if $(wildcard .env.cftunnel.vars),-f compose.cf-tun.yaml,)
+COMPOSE_FILES := $(COMPOSE_FILES_BASE) $(if $(wildcard .env.cf-tunnel.vars),-f compose.cf-tunnel.yaml,)
 
 .PHONY: help env build up down restart ps logs logs-backend logs-frontend clean push-images
 
