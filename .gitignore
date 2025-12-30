@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Temporary research clones
+.tmp_repos/
+
 # Keys and secrets
 .env
 .env.cftunnel.vars
