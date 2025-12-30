@@ -14,7 +14,7 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN cd frontend && npm run build
 
 
-FROM nginx:1.27-alpine
+FROM nginx:1.29-alpine
 
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/frontend/dist /usr/share/nginx/html
