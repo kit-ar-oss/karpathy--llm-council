@@ -21,16 +21,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "5173:80"
-
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    env_file:
-      - .env.cftunnel.vars
-    depends_on:
-      - frontend
-    restart: unless-stopped
-    command: ["tunnel", "--no-autoupdate", "run", "--token", "${CLOUDFLARE_TUNNEL_TOKEN}"]
+      - "25173:80"
 
 volumes:
   backend_data:
