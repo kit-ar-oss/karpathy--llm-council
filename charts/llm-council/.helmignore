@@ -1,0 +1,14 @@
+.DS_Store
+.git/
+.gitignore
+.idea/
+.vscode/
+
+**/.DS_Store
+**/*.swp
+**/*.tmp
+**/*.bak
+
+**/node_modules/
+**/dist/
+**/.env

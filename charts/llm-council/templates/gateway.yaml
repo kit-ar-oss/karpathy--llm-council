@@ -1,0 +1,18 @@
+{{- if and .Values.gateway.enabled .Values.gateway.createGateway -}}
+{{- $gwName := "" -}}
+{{- if .Values.gateway.gatewayName -}}
+{{- $gwName = .Values.gateway.gatewayName -}}
+{{- else -}}
+{{- $gwName = printf "%s-gateway" (include "llm-council.fullname" .) -}}
+{{- end -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ $gwName }}
+  labels:
+    {{- include "llm-council.labels" . | nindent 4 }}
+spec:
+  gatewayClassName: {{ required "gateway.gatewayClassName is required when gateway.createGateway=true" .Values.gateway.gatewayClassName }}
+  listeners:
+    {{- toYaml .Values.gateway.listeners | nindent 4 }}
+{{- end }}

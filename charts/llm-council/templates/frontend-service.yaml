@@ -1,0 +1,18 @@
+{{- $frontendName := include "llm-council.componentName" (dict "root" . "component" "frontend") -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $frontendName }}
+  labels:
+    {{- include "llm-council.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.frontend.service.port }}
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "llm-council.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend

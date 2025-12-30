@@ -1,0 +1,20 @@
+LLM Council has been deployed.
+
+Frontend Service:
+  Name: {{ include "llm-council.componentName" (dict "root" . "component" "frontend") }}
+  Port: {{ .Values.frontend.service.port }}
+
+Backend Service:
+  Name: {{ include "llm-council.componentName" (dict "root" . "component" "backend") }}
+  Port: {{ .Values.backend.service.port }}
+
+{{- if .Values.ingress.enabled }}
+Ingress is enabled. Check your ingress controller and DNS for:
+{{- range .Values.ingress.hosts }}
+  - http(s)://{{ .host }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.gateway.enabled }}
+Gateway API is enabled. Check HTTPRoute and your Gateway configuration.
+{{- end }}

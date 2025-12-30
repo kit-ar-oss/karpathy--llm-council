@@ -1,0 +1,19 @@
+{{- $backendName := include "llm-council.componentName" (dict "root" . "component" "backend") -}}
+{{- if .Values.backend.persistence.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ printf "%s-data" $backendName }}
+  labels:
+    {{- include "llm-council.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  accessModes:
+    - {{ .Values.backend.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.backend.persistence.size }}
+  {{- if .Values.backend.persistence.storageClassName }}
+  storageClassName: {{ .Values.backend.persistence.storageClassName | quote }}
+  {{- end }}
+{{- end }}
